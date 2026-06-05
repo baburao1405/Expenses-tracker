@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Expenses" />
+  <meta name="theme-color" content="#0F0F14" />
+  <title>Expenses</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    body { background: #0F0F14; color: #F0EDE6; font-family: Georgia, serif; min-height: 100vh; }
+    #app { max-width: 430px; margin: 0 auto; min-height: 100vh; position: relative; padding-bottom: 80px; }
+
+    .header { padding: 48px 24px 16px; border-bottom: 1px solid #1E1E28; }
+    .header .month { font-size: 11px; letter-spacing: 4px; color: #666; text-transform: uppercase; margin-bottom: 4px; }
+    .header .title { font-size: 32px; font-weight: normal; letter-spacing: -1px; }
+
+    .content { padding: 20px 24px; }
+
+    /* Budget Card */
+    .budget-card { background: linear-gradient(135deg, #1A1A24 0%, #161620 100%); border: 1px solid #2A2A38; border-radius: 16px; padding: 20px; margin-bottom: 20px; }
+    .budget-row { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; }
+    .label { font-size: 11px; letter-spacing: 3px; color: #666; text-transform: uppercase; margin-bottom: 6px; }
+    .spent-amount { font-size: 36px; font-weight: normal; }
+    .budget-amount { font-size: 20px; color: #888; cursor: pointer; text-align: right; }
+    .progress-bar { background: #0F0F14; border-radius: 999px; height: 6px; margin-bottom: 10px; overflow: hidden; }
+    .progress-fill { height: 100%; border-radius: 999px; transition: width 0.6s ease, background 0.3s; }
+    .remaining { font-size: 13px; }
+
+    /* Budget edit */
+    .budget-edit { display: flex; align-items: center; gap: 6px; justify-content: flex-end; }
+    .budget-edit input { width: 90px; background: #0F0F14; border: 1px solid #4ECDC4; border-radius: 6px; padding: 4px 8px; color: #fff; font-size: 16px; font-family: Georgia, serif; text-align: right; outline: none; }
+    .budget-edit button { background: #4ECDC4; border: none; border-radius: 6px; padding: 4px 10px; color: #0F0F14; cursor: pointer; font-size: 14px; }
+
+    /* Categories */
+    .section-label { font-size: 11px; letter-spacing: 3px; color: #666; text-transform: uppercase; margin-bottom: 12px; }
+    .cat-row { display: flex; align-items: center; margin-bottom: 10px; gap: 12px; }
+    .cat-emoji { font-size: 20px; width: 32px; }
+    .cat-info { flex: 1; }
+    .cat-name-row { display: flex; justify-content: space-between; margin-bottom: 4px; font-size: 14px; }
+    .cat-bar-bg { background: #1A1A24; border-radius: 999px; height: 4px; overflow: hidden; }
+    .cat-bar-fill { height: 100%; border-radius: 999px; }
+
+    /* Recent */
+    .expense-row { display: flex; align-items: center; padding: 12px 0; border-bottom: 1px solid #1A1A24; gap: 12px; }
+    .exp-emoji { font-size: 22px; }
+    .exp-info { flex: 1; }
+    .exp-note { font-size: 15px; }
+    .exp-date { font-size: 12px; color: #555; }
+    .exp-amount { font-size: 17px; }
+    .exp-delete { background: none; border: none; color: #444; cursor: pointer; font-size: 20px; padding: 0 4px; }
+
+    /* Add form */
+    .add-content { padding: 24px; }
+    .amount-box { display: flex; align-items: center; background: #1A1A24; border: 1px solid #2A2A38; border-radius: 12px; padding: 12px 16px; margin-bottom: 24px; }
+    .amount-symbol { font-size: 24px; color: #555; margin-right: 8px; }
+    .amount-input { flex: 1; background: none; border: none; outline: none; font-size: 28px; color: #F0EDE6; font-family: Georgia, serif; width: 100%; }
+    .cat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 24px; }
+    .cat-btn { background: #1A1A24; border: 1px solid #2A2A38; border-radius: 10px; padding: 10px 4px; cursor: pointer; text-align: center; color: #F0EDE6; font-family: Georgia, serif; transition: all 0.15s; }
+    .cat-btn.active { }
+    .cat-btn-emoji { font-size: 20px; }
+    .cat-btn-name { font-size: 10px; margin-top: 3px; color: #aaa; }
+    .note-input { width: 100%; background: #1A1A24; border: 1px solid #2A2A38; border-radius: 12px; padding: 14px 16px; color: #F0EDE6; font-size: 16px; font-family: Georgia, serif; outline: none; margin-bottom: 32px; }
+    .add-btn { width: 100%; background: #4ECDC4; border: none; border-radius: 12px; padding: 16px; font-size: 17px; font-family: Georgia, serif; color: #0F0F14; cursor: pointer; letter-spacing: 1px; }
+
+    /* Stats */
+    .stat-card { background: #1A1A24; border: 1px solid #2A2A38; border-radius: 14px; padding: 20px; margin-bottom: 16px; }
+    .stat-row { display: flex; justify-content: space-between; }
+    .stat-val { font-size: 26px; margin-top: 6px; }
+
+    /* Nav */
+    .nav { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 430px; background: #0F0F14; border-top: 1px solid #1E1E28; display: flex; align-items: center; justify-content: space-around; padding: 10px 0 20px; }
+    .nav-btn { background: none; border: none; cursor: pointer; padding: 6px 16px; font-family: Georgia, serif; display: flex; flex-direction: column; align-items: center; gap: 3px; transition: color 0.2s; }
+    .nav-icon { font-size: 18px; }
+    .nav-icon.big { font-size: 26px; }
+    .nav-label { font-size: 10px; letter-spacing: 1px; text-transform: uppercase; }
+
+    .empty { text-align: center; color: #444; padding: 60px 0; font-size: 15px; line-height: 1.8; }
+  </style>
+</head>
+<body>
+<div id="app"></div>
+
+<script>
+const CATEGORIES = [
+  { name: "Food", emoji: "🍔", color: "#FF6B6B" },
+  { name: "Transport", emoji: "🚗", color: "#4ECDC4" },
+  { name: "Shopping", emoji: "🛍️", color: "#FFE66D" },
+  { name: "Bills", emoji: "💡", color: "#A8E6CF" },
+  { name: "Health", emoji: "💊", color: "#FF8B94" },
+  { name: "Fun", emoji: "🎉", color: "#C7B8EA" },
+  { name: "Other", emoji: "📦", color: "#B8D4E8" },
+];
+
+const STORAGE_KEY = "spending-tracker-v2";
+
+const IMPORTED = [
+  { id: 1748613560000, amount: 250, note: "Petrol", category: "Transport", date: "2026-06-01T14:00:00.000Z" },
+  { id: 1748613568000, amount: 10000, note: "Chit", category: "Other", date: "2026-06-01T14:00:28.000Z" },
+  { id: 1748699665000, amount: 1080, note: "Mutton", category: "Food", date: "2026-06-01T12:04:25.000Z" },
+  { id: 1748701864000, amount: 250, note: "Eggs", category: "Food", date: "2026-06-01T14:41:04.000Z" },
+  { id: 1748709570000, amount: 160, note: "Rasgulla", category: "Food", date: "2026-06-01T16:59:30.000Z" },
+  { id: 1748709571000, amount: 1075, note: "Chicken", category: "Food", date: "2026-06-01T16:59:31.000Z" },
+  { id: 1748709572000, amount: 790, note: "Vegetables", category: "Food", date: "2026-06-01T16:59:32.000Z" },
+  { id: 1748781724000, amount: 1450, note: "Rice", category: "Food", date: "2026-06-02T06:12:04.000Z" },
+  { id: 1748810617000, amount: 60, note: "Soda", category: "Food", date: "2026-06-02T14:53:37.000Z" },
+  { id: 1748872049000, amount: 480, note: "Zomato", category: "Food", date: "2026-06-03T03:17:29.000Z" },
+  { id: 1748872050000, amount: 3213, note: "Phone EMI", category: "Bills", date: "2026-06-03T03:17:30.000Z" },
+  { id: 1748893440000, amount: 200, note: "Ather Charging Recharge", category: "Transport", date: "2026-06-03T09:04:00.000Z" },
+  { id: 1748893441000, amount: 60, note: "Samosa", category: "Food", date: "2026-06-03T09:04:01.000Z" },
+];
+
+function formatCurrency(amount) {
+  return new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(amount);
+}
+
+function formatDate(dateStr) {
+  return new Date(dateStr).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+}
+
+// State
+let state = {
+  view: "home",
+  expenses: [],
+  budget: 50000,
+  editingBudget: false,
+  budgetInput: "50000",
+  form: { amount: "", note: "", category: "Food" },
+};
+
+function loadData() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    const data = raw ? JSON.parse(raw) : {};
+    const existing = data.expenses || [];
+    const existingIds = new Set(existing.map(e => e.id));
+    const merged = [...existing];
+    for (const imp of IMPORTED) {
+      if (!existingIds.has(imp.id)) merged.push(imp);
+    }
+    merged.sort((a, b) => new Date(b.date) - new Date(a.date));
+    state.expenses = merged;
+    state.budget = data.budget || 50000;
+    state.budgetInput = String(state.budget);
+  } catch(e) {
+    state.expenses = [...IMPORTED].sort((a,b) => new Date(b.date)-new Date(a.date));
+  }
+}
+
+function saveData() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ expenses: state.expenses, budget: state.budget }));
+  } catch(e) {}
+}
+
+function setState(updates) {
+  Object.assign(state, updates);
+  render();
+}
+
+function addExpense() {
+  const amt = parseFloat(state.form.amount);
+  if (!amt || amt <= 0) return;
+  const newExp = {
+    id: Date.now(),
+    amount: amt,
+    note: state.form.note.trim() || state.form.category,
+    category: state.form.category,
+    date: new Date().toISOString(),
+  };
+  state.expenses = [newExp, ...state.expenses];
+  state.form = { amount: "", note: "", category: "Food" };
+  state.view = "home";
+  saveData();
+  render();
+}
+
+function deleteExpense(id) {
+  state.expenses = state.expenses.filter(e => e.id !== id);
+  saveData();
+  render();
+}
+
+function render() {
+  const thisMonth = new Date().toISOString().slice(0, 7);
+  const monthExpenses = state.expenses.filter(e => e.date.startsWith(thisMonth));
+  const totalSpent = monthExpenses.reduce((s, e) => s + e.amount, 0);
+  const remaining = state.budget - totalSpent;
+  const progress = Math.min((totalSpent / state.budget) * 100, 100);
+  const progressColor = progress > 90 ? "#FF6B6B" : progress > 70 ? "#FFE66D" : "#4ECDC4";
+
+  const catTotals = CATEGORIES.map(cat => ({
+    ...cat,
+    total: monthExpenses.filter(e => e.category === cat.name).reduce((s, e) => s + e.amount, 0),
+  })).filter(c => c.total > 0).sort((a, b) => b.total - a.total);
+
+  const viewTitle = { home: "Overview", add: "Add Expense", history: "History", stats: "Breakdown" }[state.view];
+  const monthLabel = new Date().toLocaleDateString("en-US", { month: "long", year: "numeric" });
+
+  let mainHTML = "";
+
+  if (state.view === "home") {
+    const budgetSection = state.editingBudget
+      ? `<div class="budget-edit">
+           <input id="budget-input" type="number" value="${state.budgetInput}" />
+           <button onclick="confirmBudget()">✓</button>
+         </div>`
+      : `<div class="budget-amount" onclick="startEditBudget()">${formatCurrency(state.budget)} ✏️</div>`;
+
+    const catRows = catTotals.map(cat => `
+      <div class="cat-row">
+        <div class="cat-emoji">${cat.emoji}</div>
+        <div class="cat-info">
+          <div class="cat-name-row"><span>${cat.name}</span><span style="color:#aaa">${formatCurrency(cat.total)}</span></div>
+          <div class="cat-bar-bg"><div class="cat-bar-fill" style="width:${(cat.total/totalSpent)*100}%;background:${cat.color}"></div></div>
+        </div>
+      </div>`).join("");
+
+    const recentRows = monthExpenses.slice(0,5).map(exp => {
+      const cat = CATEGORIES.find(c => c.name === exp.category) || CATEGORIES[6];
+      return `<div class="expense-row">
+        <div class="exp-emoji">${cat.emoji}</div>
+        <div class="exp-info"><div class="exp-note">${exp.note}</div><div class="exp-date">${formatDate(exp.date)}</div></div>
+        <div class="exp-amount">${formatCurrency(exp.amount)}</div>
+      </div>`;
+    }).join("");
+
+    mainHTML = `<div class="content">
+      <div class="budget-card">
+        <div class="budget-row">
+          <div><div class="label">Spent</div><div class="spent-amount">${formatCurrency(totalSpent)}</div></div>
+          <div><div class="label" style="text-align:right">Budget</div>${budgetSection}</div>
+        </div>
+        <div class="progress-bar"><div class="progress-fill" style="width:${progress}%;background:${progressColor}"></div></div>
+        <div class="remaining" style="color:${remaining>=0?'#4ECDC4':'#FF6B6B'}">${remaining>=0?formatCurrency(remaining)+' remaining':formatCurrency(Math.abs(remaining))+' over budget'}</div>
+      </div>
+      ${catTotals.length > 0 ? `<div class="section-label" style="margin-top:4px">This Month</div>${catRows}` : ""}
+      ${monthExpenses.length === 0
+        ? `<div class="empty">No expenses yet.<br/>Tap + to add one.</div>`
+        : `<div class="section-label" style="margin-top:16px">Recent</div>${recentRows}`}
+    </div>`;
+  }
+
+  else if (state.view === "add") {
+    const catBtns = CATEGORIES.map(cat => {
+      const isActive = state.form.category === cat.name;
+      return `<button class="cat-btn" onclick="setCategory('${cat.name}')"
+        style="background:${isActive ? cat.color+'30' : '#1A1A24'};border:${isActive ? '1.5px solid '+cat.color : '1px solid #2A2A38'}">
+        <div class="cat-btn-emoji">${cat.emoji}</div>
+        <div class="cat-btn-name">${cat.name}</div>
+      </button>`;
+    }).join("");
+
+    mainHTML = `<div class="add-content">
+      <div class="label">Amount</div>
+      <div class="amount-box">
+        <span class="amount-symbol">₹</span>
+        <input class="amount-input" type="number" placeholder="0.00" id="amount-field" value="${state.form.amount}" oninput="state.form.amount=this.value" />
+      </div>
+      <div class="label">Category</div>
+      <div class="cat-grid">${catBtns}</div>
+      <div class="label">Note (optional)</div>
+      <input class="note-input" placeholder="What was it for?" value="${state.form.note}" oninput="state.form.note=this.value" />
+      <button class="add-btn" onclick="addExpense()">Add Expense</button>
+    </div>`;
+  }
+
+  else if (state.view === "history") {
+    const rows = state.expenses.map(exp => {
+      const cat = CATEGORIES.find(c => c.name === exp.category) || CATEGORIES[6];
+      return `<div class="expense-row">
+        <div class="exp-emoji">${cat.emoji}</div>
+        <div class="exp-info"><div class="exp-note">${exp.note}</div><div class="exp-date">${formatDate(exp.date)} · ${exp.category}</div></div>
+        <div class="exp-amount">${formatCurrency(exp.amount)}</div>
+        <button class="exp-delete" onclick="deleteExpense(${exp.id})">×</button>
+      </div>`;
+    }).join("");
+    mainHTML = `<div class="content">${state.expenses.length === 0 ? '<div class="empty">No expenses yet.</div>' : rows}</div>`;
+  }
+
+  else if (state.view === "stats") {
+    const days = new Date().getDate();
+    mainHTML = `<div class="content">
+      <div class="stat-card">
+        <div class="stat-row">
+          <div><div class="label">Total Spent</div><div class="stat-val">${formatCurrency(totalSpent)}</div></div>
+          <div style="text-align:right"><div class="label">Transactions</div><div class="stat-val">${monthExpenses.length}</div></div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="label">Daily Average</div>
+        <div class="stat-val">${formatCurrency(Math.round(totalSpent/days))}</div>
+      </div>
+      ${catTotals.length > 0 ? `<div class="stat-card">
+        <div class="label" style="margin-bottom:16px">Top Category</div>
+        <div style="display:flex;align-items:center;gap:12px">
+          <div style="font-size:36px">${catTotals[0].emoji}</div>
+          <div><div style="font-size:20px">${catTotals[0].name}</div><div style="font-size:15px;color:#aaa">${formatCurrency(catTotals[0].total)}</div></div>
+        </div>
+      </div>` : ""}
+    </div>`;
+  }
+
+  const navBtns = [
+    { id: "home", label: "Home", icon: "◉" },
+    { id: "add", label: "Add", icon: "+" },
+    { id: "history", label: "History", icon: "☰" },
+    { id: "stats", label: "Stats", icon: "◈" },
+  ].map(tab => `
+    <button class="nav-btn" onclick="setView('${tab.id}')" style="color:${state.view===tab.id?'#4ECDC4':'#444'}">
+      <span class="nav-icon${tab.id==='add'?' big':''}">${tab.icon}</span>
+      <span class="nav-label">${tab.label}</span>
+    </button>`).join("");
+
+  document.getElementById("app").innerHTML = `
+    <div class="header">
+      <div class="month">${monthLabel}</div>
+      <div class="title">${viewTitle}</div>
+    </div>
+    ${mainHTML}
+    <div class="nav">${navBtns}</div>
+  `;
+
+  if (state.view === "add") {
+    const af = document.getElementById("amount-field");
+    if (af) af.focus();
+  }
+  if (state.editingBudget) {
+    const bi = document.getElementById("budget-input");
+    if (bi) { bi.focus(); bi.select(); }
+  }
+}
+
+function setView(v) { state.view = v; render(); }
+function setCategory(c) { state.form.category = c; render(); }
+function startEditBudget() { state.editingBudget = true; render(); }
+function confirmBudget() {
+  const v = parseFloat(document.getElementById("budget-input").value);
+  if (v > 0) { state.budget = v; state.budgetInput = String(v); }
+  state.editingBudget = false;
+  saveData();
+  render();
+}
+
+// Init
+loadData();
+render();
+</script>
+</body>
+</html>
